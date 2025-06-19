@@ -27,6 +27,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    command: ["sh", "-c", "chmod +x /docker-entrypoint-initdb.d/init-db.sh && docker-entrypoint.sh postgres"]
     networks:
       - app-network
     healthcheck:

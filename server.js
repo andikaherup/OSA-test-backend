@@ -1,16 +1,43 @@
 const express = require('express');
+const cors = require('cors');
 const { testConnection } = require('./config/database');
 const { execSync } = require('child_process');
+
+// Import routes
+const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Basic middleware
-app.use(express.json());
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Routes
+app.use('/api/auth', authRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Not found',
+    message: 'The requested endpoint does not exist',
+  });
+});
+
+// Global error handler
+app.use((error, req, res, next) => {
+  console.error('Global error handler:', error);
+  
+  res.status(error.status || 500).json({
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
+  });
 });
 
 // Run database migrations
@@ -28,6 +55,7 @@ const runMigrations = async () => {
 // Test database connection on startup
 const startServer = async () => {
   try {
+    
     const dbConnected = await testConnection();
     if (!dbConnected) {
       console.error('Failed to connect to database. Exiting...');
@@ -40,6 +68,7 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`Health check available at http://localhost:${PORT}/health`);
+      console.log(`Auth endpoints available at http://localhost:${PORT}/api/auth`);
     });
   } catch (error) {
     console.error('Error starting server:', error);

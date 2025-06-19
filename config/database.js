@@ -1,15 +1,17 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'postgres',
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || 'email_security_dashboard',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'password',
-  max: 20, // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+  password: process.env.DB_PASSWORD || 'password123',
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+  maxLifetimeSeconds: 60
 });
 
 // Test the connection
@@ -25,9 +27,9 @@ pool.on('error', (err) => {
 // Function to test database connection
 const testConnection = async () => {
   try {
-    const client = await pool.connect();
-    console.log('Database connection test successful');
-    client.release();
+    const client = await pool.connect()
+    await client.query('SELECT NOW()')
+    client.release()
     return true;
   } catch (err) {
     console.error('Database connection failed:', err.message);
