@@ -1,5 +1,5 @@
 # Development stage
-FROM node:18-alpine AS development
+FROM node:20-alpine AS development
 
 # Install Python and pip (for email security tests)
 RUN apk add --no-cache python3 py3-pip
