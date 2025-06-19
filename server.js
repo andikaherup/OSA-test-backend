@@ -6,6 +6,7 @@ const { execSync } = require('child_process');
 // Import routes
 const authRoutes = require('./routes/auth');
 const domainRoutes = require('./routes/domains');
+const testRoutes = require('./routes/tests');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/domain', domainRoutes);
+app.use('/api/test' ,testRoutes)
 
 // Health check endpoint
 app.get('/health', (req, res) => {
