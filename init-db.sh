@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 # This script runs when the PostgreSQL container starts for the first time
