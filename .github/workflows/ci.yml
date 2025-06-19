@@ -13,8 +13,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Create .env file from example
+
+    - name: Copy .env.example to .env
       run: cp .env.example .env
 
     - name: Set up Docker Compose
@@ -23,11 +23,7 @@ jobs:
     - name: Run ESLint in container
       run: docker compose exec -T app npm run lint
 
-    - name: Check Prettier formatting
-      run: |
-        npx prettier --check . || echo "Prettier issues detected (non-blocking)"
-
-    - name: Run Prettier check in container
+    - name: Check Prettier formatting in container
       run: docker compose exec -T app npx prettier --check .
 
     - name: Run tests
