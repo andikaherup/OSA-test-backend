@@ -35,9 +35,13 @@ exports.up = (pgm) => {
   // Create indexes
   pgm.createIndex('domains', 'user_id');
   pgm.createIndex('domains', 'domain_name');
-  
+
   // Unique constraint for user_id + domain_name
-  pgm.addConstraint('domains', 'unique_user_domain', 'UNIQUE(user_id, domain_name)');
+  pgm.addConstraint(
+    'domains',
+    'unique_user_domain',
+    'UNIQUE(user_id, domain_name)'
+  );
 };
 
 exports.down = (pgm) => {

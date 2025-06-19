@@ -17,13 +17,13 @@ class Domain {
       VALUES ($1, $2)
       RETURNING *
     `;
-    
+
     try {
       const result = await pool.query(query, [
         domainData.user_id,
         domainData.domain_name,
       ]);
-      
+
       return new Domain(result.rows[0]);
     } catch (error) {
       if (error.constraint === 'unique_user_domain') {
@@ -40,10 +40,10 @@ class Domain {
       WHERE user_id = $1 AND is_active = true 
       ORDER BY created_at DESC
     `;
-    
+
     try {
       const result = await pool.query(query, [userId]);
-      return result.rows.map(row => new Domain(row));
+      return result.rows.map((row) => new Domain(row));
     } catch (error) {
       throw new Error(`Error finding domains by user ID: ${error.message}`);
     }
@@ -55,14 +55,14 @@ class Domain {
       SELECT * FROM domains 
       WHERE id = $1 AND user_id = $2 AND is_active = true
     `;
-    
+
     try {
       const result = await pool.query(query, [id, userId]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
-      
+
       return new Domain(result.rows[0]);
     } catch (error) {
       throw new Error(`Error finding domain: ${error.message}`);
@@ -102,7 +102,7 @@ class Domain {
 
     try {
       const result = await pool.query(query, values);
-      
+
       if (result.rows.length === 0) {
         throw new Error('Domain not found');
       }
@@ -150,7 +150,7 @@ class Domain {
 
     try {
       const result = await pool.query(query, [this.id]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }

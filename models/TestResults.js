@@ -22,14 +22,14 @@ class TestResult {
       VALUES ($1, $2, $3)
       RETURNING *
     `;
-    
+
     try {
       const result = await pool.query(query, [
         testData.domain_id,
         testData.test_type,
         testData.status || 'pending',
       ]);
-      
+
       return new TestResult(result.rows[0]);
     } catch (error) {
       throw new Error(`Error creating test result: ${error.message}`);
@@ -46,10 +46,10 @@ class TestResult {
       ORDER BY tr.created_at DESC
       LIMIT $2
     `;
-    
+
     try {
       const result = await pool.query(query, [domainId, limit]);
-      return result.rows.map(row => new TestResult(row));
+      return result.rows.map((row) => new TestResult(row));
     } catch (error) {
       throw new Error(`Error finding test results: ${error.message}`);
     }
@@ -63,14 +63,14 @@ class TestResult {
       JOIN domains d ON tr.domain_id = d.id
       WHERE tr.id = $1
     `;
-    
+
     try {
       const result = await pool.query(query, [id]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
-      
+
       return new TestResult(result.rows[0]);
     } catch (error) {
       throw new Error(`Error finding test result: ${error.message}`);
@@ -85,7 +85,11 @@ class TestResult {
 
     // Build dynamic update query
     Object.keys(updateData).forEach((key) => {
-      if (updateData[key] !== undefined && key !== 'id' && key !== 'domain_id') {
+      if (
+        updateData[key] !== undefined &&
+        key !== 'id' &&
+        key !== 'domain_id'
+      ) {
         fields.push(`${key} = $${paramCount}`);
         values.push(updateData[key]);
         paramCount++;
@@ -110,7 +114,7 @@ class TestResult {
 
     try {
       const result = await pool.query(query, values);
-      
+
       if (result.rows.length === 0) {
         throw new Error('Test result not found');
       }
@@ -125,9 +129,9 @@ class TestResult {
 
   // Mark test as running
   async markAsRunning() {
-    return this.update({ 
+    return this.update({
       status: 'running',
-      executed_at: new Date()
+      executed_at: new Date(),
     });
   }
 
@@ -138,7 +142,7 @@ class TestResult {
       result: testResult,
       score,
       recommendations,
-      error_message: null
+      error_message: null,
     });
   }
 
@@ -146,7 +150,7 @@ class TestResult {
   async markAsFailed(errorMessage) {
     return this.update({
       status: 'failed',
-      error_message: errorMessage
+      error_message: errorMessage,
     });
   }
 
@@ -161,7 +165,7 @@ class TestResult {
 
     try {
       const result = await pool.query(query, [domainId]);
-      return result.rows.map(row => new TestResult(row));
+      return result.rows.map((row) => new TestResult(row));
     } catch (error) {
       throw new Error(`Error getting latest test results: ${error.message}`);
     }
@@ -180,7 +184,7 @@ class TestResult {
 
     try {
       const result = await pool.query(query, [userId, limit]);
-      return result.rows.map(row => new TestResult(row));
+      return result.rows.map((row) => new TestResult(row));
     } catch (error) {
       throw new Error(`Error getting test history: ${error.message}`);
     }
@@ -198,7 +202,7 @@ class TestResult {
 
     try {
       const result = await pool.query(query);
-      return result.rows.map(row => new TestResult(row));
+      return result.rows.map((row) => new TestResult(row));
     } catch (error) {
       throw new Error(`Error getting pending tests: ${error.message}`);
     }

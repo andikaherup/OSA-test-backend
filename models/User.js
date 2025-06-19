@@ -19,7 +19,7 @@ class User {
       VALUES ($1, $2, $3, $4)
       RETURNING *
     `;
-    
+
     try {
       const result = await pool.query(query, [
         userData.email,
@@ -27,7 +27,7 @@ class User {
         userData.first_name,
         userData.last_name,
       ]);
-      
+
       return new User(result.rows[0]);
     } catch (error) {
       throw new Error(`Error creating user: ${error.message}`);
@@ -37,14 +37,14 @@ class User {
   // Find user by email
   static async findByEmail(email) {
     const query = 'SELECT * FROM users WHERE email = $1 AND is_active = true';
-    
+
     try {
       const result = await pool.query(query, [email]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
-      
+
       return new User(result.rows[0]);
     } catch (error) {
       throw new Error(`Error finding user by email: ${error.message}`);
@@ -54,14 +54,14 @@ class User {
   // Find user by ID
   static async findById(id) {
     const query = 'SELECT * FROM users WHERE id = $1 AND is_active = true';
-    
+
     try {
       const result = await pool.query(query, [id]);
-      
+
       if (result.rows.length === 0) {
         return null;
       }
-      
+
       return new User(result.rows[0]);
     } catch (error) {
       throw new Error(`Error finding user by ID: ${error.message}`);
@@ -101,7 +101,7 @@ class User {
 
     try {
       const result = await pool.query(query, values);
-      
+
       if (result.rows.length === 0) {
         throw new Error('User not found');
       }

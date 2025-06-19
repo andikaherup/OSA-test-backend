@@ -5,7 +5,7 @@ exports.shorthands = undefined;
 exports.up = (pgm) => {
   // Create enum for test types
   pgm.createType('test_type', ['dmarc', 'spf', 'dkim', 'mail_echo']);
-  
+
   // Create enum for test status
   pgm.createType('test_status', ['pending', 'running', 'completed', 'failed']);
 

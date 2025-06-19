@@ -55,7 +55,7 @@ const optionalAuth = async (req, res, next) => {
     if (token) {
       const decoded = verifyToken(token);
       const user = await User.findById(decoded.userId);
-      
+
       if (user) {
         req.user = user;
       }

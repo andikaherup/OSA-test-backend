@@ -4,9 +4,9 @@ services:
       context: .
       target: development
     ports:
-      - "3000:3000"
+      - '3000:3000'
     env_file:
-    - .env
+      - .env
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
@@ -23,14 +23,14 @@ services:
       POSTGRES_PASSWORD: password123
       POSTGRES_DB: email_security_dashboard
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ['CMD', 'pg_isready', '-U', 'postgres']
       interval: 5s
       timeout: 5s
       retries: 5

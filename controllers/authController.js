@@ -1,5 +1,9 @@
 const User = require('../models/User');
-const { hashPassword, comparePassword, validatePassword } = require('../utils/password');
+const {
+  hashPassword,
+  comparePassword,
+  validatePassword,
+} = require('../utils/password');
 const { generateToken } = require('../utils/jwt');
 
 /**
@@ -13,7 +17,8 @@ const register = async (req, res) => {
     if (!email || !password || !first_name || !last_name) {
       return res.status(400).json({
         error: 'Validation error',
-        message: 'All fields are required: email, password, first_name, last_name',
+        message:
+          'All fields are required: email, password, first_name, last_name',
       });
     }
 
