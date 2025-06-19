@@ -9,7 +9,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up",
+    "docker:down": "docker-compose down",
+    "docker:dev": "docker-compose up --build"
   },
   "keywords": [
     "email",
@@ -19,7 +23,7 @@
     "dkim",
     "dashboard"
   ],
-  "author": "Andika Heru Pratama",
+  "author": "Andika Heru pratama",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2"
