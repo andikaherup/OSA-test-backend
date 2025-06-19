@@ -1,5 +1,5 @@
-const Domain = require('../models/Domain');
-const TestResult = require('../models/TestResult');
+const Domain = require('../models/Domains');
+const TestResult = require('../models/TestResults');
 const { APIError, asyncHandler } = require('../middleware/errorHandler');
 const { spawn } = require('child_process');
 const path = require('path');
