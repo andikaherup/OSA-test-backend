@@ -5,7 +5,7 @@ import re
 from typing import Dict, List, Any
 
 def output_result(result: Dict[str, Any]) -> None:
-    """Output test result as JSON to stdout"""
+    """Output test result as JSON """
     try:
         print(json.dumps(result, indent=2, default=str))
     except Exception as e:
