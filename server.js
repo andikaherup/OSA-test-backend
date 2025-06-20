@@ -18,8 +18,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/domain', domainRoutes);
-app.use('/api/test' ,testRoutes)
+app.use('/api/domains', domainRoutes);
+app.use('/api/tests' ,testRoutes)
 
 // Health check endpoint
 app.get('/health', (req, res) => {
