@@ -1,53 +1,72 @@
 const User = require('../models/User');
-const {
-  hashPassword,
-  comparePassword,
-  validatePassword,
-} = require('../utils/password');
+const { hashPassword, comparePassword, validatePassword } = require('../utils/password');
 const { generateToken } = require('../utils/jwt');
+const { 
+  ValidationError, 
+  ConflictError, 
+  AuthenticationError,
+  DatabaseError,
+  asyncHandler 
+} = require('../middleware/errorHandler');
 
 /**
  * Register a new user
  */
-const register = async (req, res) => {
+const register = asyncHandler(async (req, res) => {
+  const { email, password, first_name, last_name } = req.body;
+
+  // Validate required fields
+  const missingFields = [];
+  if (!email) missingFields.push('email');
+  if (!password) missingFields.push('password');
+  if (!first_name) missingFields.push('first_name');
+  if (!last_name) missingFields.push('last_name');
+
+  if (missingFields.length > 0) {
+    throw new ValidationError(
+      'Missing required fields',
+      missingFields.map(field => ({ field, message: `${field} is required` }))
+    );
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    throw new ValidationError(
+      'Invalid email format',
+      [{ field: 'email', message: 'Please provide a valid email address' }]
+    );
+  }
+
+  // Validate password strength
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.isValid) {
+    throw new ValidationError(
+      'Password does not meet requirements',
+      passwordValidation.errors.map(error => ({ field: 'password', message: error }))
+    );
+  }
+
+  // Validate name fields
+  if (first_name.trim().length < 1 || first_name.trim().length > 50) {
+    throw new ValidationError(
+      'Invalid first name',
+      [{ field: 'first_name', message: 'First name must be between 1 and 50 characters' }]
+    );
+  }
+
+  if (last_name.trim().length < 1 || last_name.trim().length > 50) {
+    throw new ValidationError(
+      'Invalid last name',
+      [{ field: 'last_name', message: 'Last name must be between 1 and 50 characters' }]
+    );
+  }
+
   try {
-    const { email, password, first_name, last_name } = req.body;
-
-    // Validate required fields
-    if (!email || !password || !first_name || !last_name) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message:
-          'All fields are required: email, password, first_name, last_name',
-      });
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Invalid email format',
-      });
-    }
-
-    // Validate password strength
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Password does not meet requirements',
-        details: passwordValidation.errors,
-      });
-    }
-
     // Check if user already exists
     const existingUser = await User.findByEmail(email.toLowerCase());
     if (existingUser) {
-      return res.status(409).json({
-        error: 'Registration failed',
-        message: 'User with this email already exists',
-      });
+      throw new ConflictError('User with this email already exists');
     }
 
     // Hash password
@@ -73,45 +92,44 @@ const register = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to register user',
-    });
+    if (error instanceof ValidationError || error instanceof ConflictError) {
+      throw error;
+    }
+    throw new DatabaseError('Failed to register user');
   }
-};
+});
 
 /**
  * Login user
  */
-const login = async (req, res) => {
+const login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  // Validate required fields
+  if (!email || !password) {
+    throw new ValidationError(
+      'Missing required fields',
+      [
+        { field: 'email', message: 'Email is required' },
+        { field: 'password', message: 'Password is required' }
+      ].filter(item => 
+        (item.field === 'email' && !email) || 
+        (item.field === 'password' && !password)
+      )
+    );
+  }
+
   try {
-    const { email, password } = req.body;
-
-    // Validate required fields
-    if (!email || !password) {
-      return res.status(400).json({
-        error: 'Validation error',
-        message: 'Email and password are required',
-      });
-    }
-
     // Find user by email
     const user = await User.findByEmail(email.toLowerCase());
     if (!user) {
-      return res.status(401).json({
-        error: 'Authentication failed',
-        message: 'Invalid email or password',
-      });
+      throw new AuthenticationError('Invalid email or password');
     }
 
     // Verify password
     const isValidPassword = await comparePassword(password, user.password_hash);
     if (!isValidPassword) {
-      return res.status(401).json({
-        error: 'Authentication failed',
-        message: 'Invalid email or password',
-      });
+      throw new AuthenticationError('Invalid email or password');
     }
 
     // Generate JWT token
@@ -126,13 +144,12 @@ const login = async (req, res) => {
       token,
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to login',
-    });
+    if (error instanceof AuthenticationError) {
+      throw error;
+    }
+    throw new DatabaseError('Failed to login');
   }
-};
+});
 
 /**
  * Get current user profile
