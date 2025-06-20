@@ -2,7 +2,7 @@ import json
 import sys
 import dns.resolver
 import re
-from typing import Dict, Any
+from typing import Dict, List, Any
 
 def output_result(result: Dict[str, Any]) -> None:
     """Output test result as JSON to stdout"""
@@ -130,6 +130,34 @@ def parse_dmarc_record(dmarc_record: str) -> Dict[str, Any]:
         _assign_dmarc_tag(policy_data, tag, value)
 
     return policy_data
+
+def get_mx_records(domain: str) -> List[Dict[str, Any]]:
+    """Get MX records for domain"""
+    try:
+        resolver = dns.resolver.Resolver()
+        resolver.timeout = 10
+        
+        mx_records = []
+        answers = resolver.resolve(domain, 'MX')
+        
+        for mx in answers:
+            mx_records.append({
+                'priority': mx.preference,
+                'exchange': str(mx.exchange).rstrip('.'),
+            })
+            
+        # Sort by priority
+        mx_records.sort(key=lambda x: x['priority'])
+        return mx_records
+        
+    except dns.resolver.NXDOMAIN:
+        return []
+    except dns.resolver.NoAnswer:
+        return []
+    except Exception as e:
+        raise Exception(f"Failed to get MX records for {domain}: {str(e)}")
+
+
 
 def dns_lookup(domain, record_type):
     try:
