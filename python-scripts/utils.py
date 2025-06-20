@@ -73,6 +73,64 @@ def parse_spf_record(spf_record: str) -> Dict[str, Any]:
     }
 
 
+def _assign_dmarc_tag(policy_data: Dict[str, Any], tag: str, value: str) -> None:
+    if tag == 'v':
+        policy_data['version'] = value
+    elif tag == 'p':
+        policy_data['policy'] = value
+    elif tag == 'sp':
+        policy_data['subdomain_policy'] = value
+    elif tag == 'pct':
+        try:
+            policy_data['percentage'] = int(value)
+        except ValueError:
+            pass
+    elif tag == 'rua':
+        policy_data['rua'] = [uri.strip() for uri in value.split(',')]
+    elif tag == 'ruf':
+        policy_data['ruf'] = [uri.strip() for uri in value.split(',')]
+    elif tag == 'fo':
+        policy_data['forensic_options'] = value
+    elif tag == 'aspf':
+        policy_data['alignment_spf'] = value
+    elif tag == 'adkim':
+        policy_data['alignment_dkim'] = value
+    elif tag == 'ri':
+        try:
+            policy_data['report_interval'] = int(value)
+        except ValueError:
+            pass
+
+def parse_dmarc_record(dmarc_record: str) -> Dict[str, Any]:
+    """Parse DMARC record and extract policy information"""
+    policy_data = {
+        'version': None,
+        'policy': None,
+        'subdomain_policy': None,
+        'percentage': 100,
+        'rua': [],
+        'ruf': [],
+        'forensic_options': None,
+        'alignment_spf': 'r',
+        'alignment_dkim': 'r',
+        'report_interval': 86400
+    }
+
+    # Split DMARC record into tag-value pairs
+    pairs = dmarc_record.split(';')
+
+    for pair in pairs:
+        pair = pair.strip()
+        if '=' not in pair:
+            continue
+
+        tag, value = pair.split('=', 1)
+        tag = tag.strip().lower()
+        value = value.strip()
+        _assign_dmarc_tag(policy_data, tag, value)
+
+    return policy_data
+
 def dns_lookup(domain, record_type):
     try:
         answers = dns.resolver.resolve(domain, record_type)
