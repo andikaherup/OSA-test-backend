@@ -1,46 +1,158 @@
 #!/usr/bin/env python3
-from utils import get_domain_from_args, dns_lookup, output_result, handle_error
+"""
+DMARC (Domain-based Message Authentication, Reporting, and Conformance) Test
+Tests for DMARC policy presence and configuration
+"""
+import sys
+from utils import (
+    get_domain_from_args, dns_lookup, parse_dmarc_record, 
+    output_result, handle_error
+)
 
-def test_dmarc(domain):
+
+def get_dmarc_record(domain: str):
+    """Retrieve the DMARC record for a domain."""
+    dmarc_domain = f"_dmarc.{domain}"
+    dmarc_records = dns_lookup(dmarc_domain, 'TXT')
+    for record in dmarc_records:
+        if record.startswith('v=DMARC1'):
+            return record
+    return None
+
+def handle_no_dmarc_record(result, domain):
+    """Handle the case where no DMARC record is found."""
+    result['issues'].append('No DMARC record found')
+    result['recommendations'].extend([
+        f'Create a DMARC record at _dmarc.{domain}',
+        'Start with a policy of "none" for monitoring',
+        'Configure reporting addresses (rua/ruf)',
+        'Gradually move to "quarantine" then "reject" policy'
+    ])
+    return result
+
+def score_dmarc(parsed, result):
+    """Score and validate the DMARC record."""
+    # Validate version
+    if parsed['version'] != 'DMARC1':
+        result['issues'].append(f"Invalid DMARC version: {parsed['version']}")
+    else:
+        result['score'] += 20
+
+    # Check policy
+    result['policy'] = parsed['policy']
+    if not parsed['policy']:
+        result['issues'].append('Missing policy (p) tag')
+    elif parsed['policy'] == 'none':
+        result['score'] += 10
+        result['recommendations'].append('Consider upgrading policy to "quarantine" or "reject"')
+    elif parsed['policy'] == 'quarantine':
+        result['score'] += 25
+        result['recommendations'].append('Consider upgrading policy to "reject" for maximum protection')
+    elif parsed['policy'] == 'reject':
+        result['score'] += 40
+    else:
+        result['issues'].append(f"Invalid policy value: {parsed['policy']}")
+
+    # Check subdomain policy
+    result['subdomain_policy'] = parsed['subdomain_policy']
+    if parsed['subdomain_policy']:
+        result['score'] += 5
+
+    # Check percentage
+    result['percentage'] = parsed['percentage']
+    if parsed['percentage'] == 100:
+        result['score'] += 15
+    elif parsed['percentage'] > 0:
+        result['score'] += 10
+        result['recommendations'].append('Consider increasing percentage to 100% for full coverage')
+    else:
+        result['issues'].append('Percentage set to 0%')
+
+    # Check reporting addresses
+    result['rua_addresses'] = parsed['rua']
+    result['ruf_addresses'] = parsed['ruf']
+
+    if parsed['rua']:
+        result['score'] += 10
+    else:
+        result['recommendations'].append('Add aggregate reporting address (rua)')
+
+    if parsed['ruf']:
+        result['score'] += 5
+    else:
+        result['recommendations'].append('Consider adding forensic reporting address (ruf)')
+
+    # Check alignment
+    result['alignment_spf'] = parsed['alignment_spf']
+    result['alignment_dkim'] = parsed['alignment_dkim']
+
+    if parsed['alignment_spf'] == 's':
+        result['score'] += 5
+    if parsed['alignment_dkim'] == 's':
+        result['score'] += 5
+
+    # Overall validation
+    if (parsed['version'] == 'DMARC1' and 
+        parsed['policy'] in ['none', 'quarantine', 'reject'] and
+        parsed['percentage'] > 0):
+        result['valid'] = True
+
+    # Additional recommendations based on policy
+    if parsed['policy'] in ['quarantine', 'reject'] and not parsed['rua']:
+        result['recommendations'].append('Reporting addresses are crucial for quarantine/reject policies')
+
+    return result
+
+def test_dmarc(domain: str) -> dict:
+    """
+    Test DMARC configuration for the domain
+
+    Args:
+        domain: Domain to test
+
+    Returns:
+        Dictionary containing test results
+    """
     result = {
         'domain': domain,
         'record_found': False,
         'record': None,
         'policy': None,
+        'subdomain_policy': None,
+        'percentage': 0,
+        'rua_addresses': [],
+        'ruf_addresses': [],
+        'alignment_spf': None,
+        'alignment_dkim': None,
+        'valid': False,
+        'issues': [],
+        'recommendations': [],
         'score': 0
     }
-    
+
     try:
-        dmarc_domain = f"_dmarc.{domain}"
-        dmarc_records = dns_lookup(dmarc_domain, 'TXT')
-        
-        for record in dmarc_records:
-            if record.startswith('v=DMARC1'):
-                result['record_found'] = True
-                result['record'] = record
-                result['score'] = 50
-                
-                # Basic policy extraction
-                if 'p=reject' in record:
-                    result['policy'] = 'reject'
-                    result['score'] = 90
-                elif 'p=quarantine' in record:
-                    result['policy'] = 'quarantine'
-                    result['score'] = 70
-                elif 'p=none' in record:
-                    result['policy'] = 'none'
-                    result['score'] = 50
-                break
-        
+        dmarc_record = get_dmarc_record(domain)
+        if not dmarc_record:
+            return handle_no_dmarc_record(result, domain)
+
+        result['record_found'] = True
+        result['record'] = dmarc_record
+
+        parsed = parse_dmarc_record(dmarc_record)
+        result = score_dmarc(parsed, result)
+
         return result
-        
+
     except Exception as e:
         handle_error(f"DMARC test failed: {str(e)}", domain)
 
+
 def main():
+    """Main function"""
     domain = get_domain_from_args()
     result = test_dmarc(domain)
     output_result(result)
+
 
 if __name__ == "__main__":
     main()
