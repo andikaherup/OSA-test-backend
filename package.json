@@ -16,7 +16,8 @@
     "docker:dev": "docker compose up --build",
     "migrate:up": "npx node-pg-migrate up",
     "migrate:down": "npx node-pg-migrate down",
-    "migrate:create": "npx node-pg-migrate create"
+    "migrate:create": "npx node-pg-migrate create",
+    "prepare": "husky install"
   },
   "keywords": [
     "email",
@@ -41,6 +42,11 @@
   "devDependencies": {
     "nodemon": "^3.0.1",
     "eslint": "^8.50.0",
-    "prettier": "^3.0.3"
+    "prettier": "^3.0.3",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,md,yml}": "prettier --write"
   }
 }
