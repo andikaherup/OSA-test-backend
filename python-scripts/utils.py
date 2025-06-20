@@ -155,7 +155,7 @@ def get_mx_records(domain: str) -> List[Dict[str, Any]]:
     except dns.resolver.NoAnswer:
         return []
     except Exception as e:
-        raise Exception(f"Failed to get MX records for {domain}: {str(e)}")
+        raise dns.resolver.DNSException(f"Failed to get MX records for {domain}: {str(e)}")
 
 
 
@@ -163,7 +163,7 @@ def dns_lookup(domain, record_type):
     try:
         answers = dns.resolver.resolve(domain, record_type)
         return [str(answer).strip('"') for answer in answers]
-    except:
+    except Exception:
         return []
 
 def get_domain_from_args():

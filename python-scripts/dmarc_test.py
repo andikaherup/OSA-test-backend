@@ -30,15 +30,13 @@ def handle_no_dmarc_record(result, domain):
     ])
     return result
 
-def score_dmarc(parsed, result):
-    """Score and validate the DMARC record."""
-    # Validate version
+def validate_version(parsed, result):
     if parsed['version'] != 'DMARC1':
         result['issues'].append(f"Invalid DMARC version: {parsed['version']}")
     else:
         result['score'] += 20
 
-    # Check policy
+def score_policy(parsed, result):
     result['policy'] = parsed['policy']
     if not parsed['policy']:
         result['issues'].append('Missing policy (p) tag')
@@ -53,12 +51,12 @@ def score_dmarc(parsed, result):
     else:
         result['issues'].append(f"Invalid policy value: {parsed['policy']}")
 
-    # Check subdomain policy
+def score_subdomain_policy(parsed, result):
     result['subdomain_policy'] = parsed['subdomain_policy']
     if parsed['subdomain_policy']:
         result['score'] += 5
 
-    # Check percentage
+def score_percentage(parsed, result):
     result['percentage'] = parsed['percentage']
     if parsed['percentage'] == 100:
         result['score'] += 15
@@ -68,7 +66,7 @@ def score_dmarc(parsed, result):
     else:
         result['issues'].append('Percentage set to 0%')
 
-    # Check reporting addresses
+def check_reporting_addresses(parsed, result):
     result['rua_addresses'] = parsed['rua']
     result['ruf_addresses'] = parsed['ruf']
 
@@ -82,7 +80,7 @@ def score_dmarc(parsed, result):
     else:
         result['recommendations'].append('Consider adding forensic reporting address (ruf)')
 
-    # Check alignment
+def check_alignment(parsed, result):
     result['alignment_spf'] = parsed['alignment_spf']
     result['alignment_dkim'] = parsed['alignment_dkim']
 
@@ -91,16 +89,26 @@ def score_dmarc(parsed, result):
     if parsed['alignment_dkim'] == 's':
         result['score'] += 5
 
-    # Overall validation
+def validate_overall(parsed, result):
     if (parsed['version'] == 'DMARC1' and 
         parsed['policy'] in ['none', 'quarantine', 'reject'] and
         parsed['percentage'] > 0):
         result['valid'] = True
 
-    # Additional recommendations based on policy
+def add_policy_recommendations(parsed, result):
     if parsed['policy'] in ['quarantine', 'reject'] and not parsed['rua']:
         result['recommendations'].append('Reporting addresses are crucial for quarantine/reject policies')
 
+def score_dmarc(parsed, result):
+    """Score and validate the DMARC record."""
+    validate_version(parsed, result)
+    score_policy(parsed, result)
+    score_subdomain_policy(parsed, result)
+    score_percentage(parsed, result)
+    check_reporting_addresses(parsed, result)
+    check_alignment(parsed, result)
+    validate_overall(parsed, result)
+    add_policy_recommendations(parsed, result)
     return result
 
 def test_dmarc(domain: str) -> dict:
