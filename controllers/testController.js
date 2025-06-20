@@ -3,6 +3,7 @@ const TestResult = require('../models/TestResults');
 const { APIError, asyncHandler } = require('../middleware/errorHandler');
 const { spawn } = require('child_process');
 const path = require('path');
+const webSocketService = require('../services/websocketService');
 
 /**
  * Run a test for a specific domain
@@ -35,7 +36,10 @@ const runTest = asyncHandler(async (req, res) => {
   });
 
   // Start test execution asynchronously
-  executeTest(testResult, domain.domain_name);
+  executeTest(testResult, domain.domain_name, req.user.id);
+
+  // Send real-time notification
+  webSocketService.sendTestStarted(req.user.id, testResult);
 
   res.status(201).json({
     message: 'Test started successfully',
@@ -157,7 +161,7 @@ const retryTest = asyncHandler(async (req, res) => {
   });
 
   // Start test execution
-  executeTest(testResult, domain.domain_name);
+  executeTest(testResult, domain.domain_name, req.user.id);
 
   res.json({
     message: 'Test retry started successfully',
@@ -169,11 +173,15 @@ const retryTest = asyncHandler(async (req, res) => {
  * Execute test asynchronously
  * @param {TestResult} testResult - Test result object
  * @param {string} domainName - Domain name to test
+ * @param {number} userId - User ID for notifications
  */
-const executeTest = async (testResult, domainName) => {
+const executeTest = async (testResult, domainName, userId) => {
   try {
     // Mark test as running
     await testResult.markAsRunning();
+    
+    // Send real-time update
+    webSocketService.sendTestUpdate(userId, testResult);
 
     // Python script path
     const pythonScriptsPath = process.env.PYTHON_SCRIPTS_PATH || './python-scripts';
@@ -181,8 +189,9 @@ const executeTest = async (testResult, domainName) => {
 
     // Execute Python script
     const pythonProcess = spawn('python3', [scriptPath, domainName], {
-      cwd: process.cwd(),
+      cwd: pythonScriptsPath,
       stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...process.env }
     });
 
     let stdout = '';
@@ -209,23 +218,38 @@ const executeTest = async (testResult, domainName) => {
           );
 
           await testResult.markAsCompleted(result, score, recommendations);
+          
+          // Send real-time completion notification
+          webSocketService.sendTestCompleted(userId, await TestResult.findById(testResult.id));
         } else {
           await testResult.markAsFailed(stderr || 'Test execution failed');
+          
+          // Send real-time failure notification
+          webSocketService.sendTestFailed(userId, await TestResult.findById(testResult.id));
         }
       } catch (error) {
         console.error('Error processing test result:', error);
         await testResult.markAsFailed(`Error processing test result: ${error.message}`);
+        
+        // Send real-time failure notification
+        webSocketService.sendTestFailed(userId, await TestResult.findById(testResult.id));
       }
     });
 
     pythonProcess.on('error', async (error) => {
       console.error('Python process error:', error);
       await testResult.markAsFailed(`Python execution error: ${error.message}`);
+      
+      // Send real-time failure notification
+      webSocketService.sendTestFailed(userId, await TestResult.findById(testResult.id));
     });
 
   } catch (error) {
     console.error('Error executing test:', error);
     await testResult.markAsFailed(`Test execution error: ${error.message}`);
+    
+    // Send real-time failure notification
+    webSocketService.sendTestFailed(userId, await TestResult.findById(testResult.id));
   }
 };
 
