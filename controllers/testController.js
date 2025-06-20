@@ -189,10 +189,12 @@ const executeTest = async (testResult, domainName, userId) => {
 
     // Execute Python script
     const pythonProcess = spawn('python3', [scriptPath, domainName], {
-      cwd: pythonScriptsPath,
+      cwd: process.cwd(),
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env }
     });
+
+    
 
     let stdout = '';
     let stderr = '';

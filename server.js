@@ -6,7 +6,7 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
 const { testConnection } = require('./config/database');
 const { execSync } = require('child_process');
-
+const webSocketService = require('./services/websocketService');
 
 // Import middleware
 const { globalErrorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -109,7 +109,8 @@ const testConnectionWithRetry = async (maxRetries = 5) => {
 // Start server
 const startServer = async () => {
   try {
-
+    // Wait for PostgreSQL to be ready
+    
     // Test database connection with retries
     const dbConnected = await testConnectionWithRetry();
     if (!dbConnected) {
@@ -120,6 +121,8 @@ const startServer = async () => {
     // Run migrations
     await runMigrations();
 
+    // Initialize WebSocket service
+    webSocketService.initialize(server);
 
     server.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
