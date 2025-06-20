@@ -10,7 +10,7 @@ const webSocketService = require('../services/websocketService');
  */
 const runTest = asyncHandler(async (req, res) => {
   const { domain_id, test_type } = req.body;
-  
+
   // Validate domain ownership
   const domain = await Domain.findByIdAndUserId(domain_id, req.user.id);
   if (!domain) {
@@ -20,12 +20,16 @@ const runTest = asyncHandler(async (req, res) => {
   // Check if there's already a pending or running test for this domain and type
   const existingTests = await TestResult.findByDomainId(domain_id, 5);
   const activeTest = existingTests.find(
-    test => test.test_type === test_type && 
-           (test.status === 'pending' || test.status === 'running')
+    (test) =>
+      test.test_type === test_type &&
+      (test.status === 'pending' || test.status === 'running')
   );
 
   if (activeTest) {
-    throw new APIError(`A ${test_type} test is already running for this domain`, 409);
+    throw new APIError(
+      `A ${test_type} test is already running for this domain`,
+      409
+    );
   }
 
   // Create new test result record
@@ -52,15 +56,18 @@ const runTest = asyncHandler(async (req, res) => {
  */
 const getTestResult = asyncHandler(async (req, res) => {
   const { testId } = req.params;
-  
+
   const testResult = await TestResult.findById(testId);
-  
+
   if (!testResult) {
     throw new APIError('Test result not found', 404);
   }
 
   // Verify user owns the domain
-  const domain = await Domain.findByIdAndUserId(testResult.domain_id, req.user.id);
+  const domain = await Domain.findByIdAndUserId(
+    testResult.domain_id,
+    req.user.id
+  );
   if (!domain) {
     throw new APIError('Access denied', 403);
   }
@@ -76,9 +83,9 @@ const getTestResult = asyncHandler(async (req, res) => {
  */
 const getTestHistory = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20, test_type, domain_id, status } = req.query;
-  
+
   let tests;
-  
+
   if (domain_id) {
     // Verify domain ownership
     const domain = await Domain.findByIdAndUserId(domain_id, req.user.id);
@@ -92,11 +99,11 @@ const getTestHistory = asyncHandler(async (req, res) => {
 
   // Apply filters
   if (test_type) {
-    tests = tests.filter(test => test.test_type === test_type);
+    tests = tests.filter((test) => test.test_type === test_type);
   }
-  
+
   if (status) {
-    tests = tests.filter(test => test.status === status);
+    tests = tests.filter((test) => test.status === status);
   }
 
   // Implement pagination
@@ -121,7 +128,7 @@ const getTestHistory = asyncHandler(async (req, res) => {
  */
 const getPendingTests = asyncHandler(async (req, res) => {
   const pendingTests = await TestResult.getPendingTests();
-  
+
   res.json({
     message: 'Pending tests retrieved successfully',
     tests: pendingTests,
@@ -134,15 +141,18 @@ const getPendingTests = asyncHandler(async (req, res) => {
  */
 const retryTest = asyncHandler(async (req, res) => {
   const { testId } = req.params;
-  
+
   const testResult = await TestResult.findById(testId);
-  
+
   if (!testResult) {
     throw new APIError('Test result not found', 404);
   }
 
   // Verify user owns the domain
-  const domain = await Domain.findByIdAndUserId(testResult.domain_id, req.user.id);
+  const domain = await Domain.findByIdAndUserId(
+    testResult.domain_id,
+    req.user.id
+  );
   if (!domain) {
     throw new APIError('Access denied', 403);
   }
@@ -179,22 +189,24 @@ const executeTest = async (testResult, domainName, userId) => {
   try {
     // Mark test as running
     await testResult.markAsRunning();
-    
+
     // Send real-time update
     webSocketService.sendTestUpdate(userId, testResult);
 
     // Python script path
-    const pythonScriptsPath = process.env.PYTHON_SCRIPTS_PATH || './python-scripts';
-    const scriptPath = path.join(pythonScriptsPath, `${testResult.test_type}_test.py`);
+    const pythonScriptsPath =
+      process.env.PYTHON_SCRIPTS_PATH || './python-scripts';
+    const scriptPath = path.join(
+      pythonScriptsPath,
+      `${testResult.test_type}_test.py`
+    );
 
     // Execute Python script
     const pythonProcess = spawn('python3', [scriptPath, domainName], {
       cwd: process.cwd(),
       stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env }
+      env: { ...process.env },
     });
-
-    
 
     let stdout = '';
     let stderr = '';
@@ -212,46 +224,62 @@ const executeTest = async (testResult, domainName, userId) => {
         if (code === 0) {
           // Parse test results
           const result = JSON.parse(stdout);
-          
+
           // Calculate score and recommendations
           const { score, recommendations } = calculateScoreAndRecommendations(
-            testResult.test_type, 
+            testResult.test_type,
             result
           );
 
           await testResult.markAsCompleted(result, score, recommendations);
-          
+
           // Send real-time completion notification
-          webSocketService.sendTestCompleted(userId, await TestResult.findById(testResult.id));
+          webSocketService.sendTestCompleted(
+            userId,
+            await TestResult.findById(testResult.id)
+          );
         } else {
           await testResult.markAsFailed(stderr || 'Test execution failed');
-          
+
           // Send real-time failure notification
-          webSocketService.sendTestFailed(userId, await TestResult.findById(testResult.id));
+          webSocketService.sendTestFailed(
+            userId,
+            await TestResult.findById(testResult.id)
+          );
         }
       } catch (error) {
         console.error('Error processing test result:', error);
-        await testResult.markAsFailed(`Error processing test result: ${error.message}`);
-        
+        await testResult.markAsFailed(
+          `Error processing test result: ${error.message}`
+        );
+
         // Send real-time failure notification
-        webSocketService.sendTestFailed(userId, await TestResult.findById(testResult.id));
+        webSocketService.sendTestFailed(
+          userId,
+          await TestResult.findById(testResult.id)
+        );
       }
     });
 
     pythonProcess.on('error', async (error) => {
       console.error('Python process error:', error);
       await testResult.markAsFailed(`Python execution error: ${error.message}`);
-      
-      // Send real-time failure notification
-      webSocketService.sendTestFailed(userId, await TestResult.findById(testResult.id));
-    });
 
+      // Send real-time failure notification
+      webSocketService.sendTestFailed(
+        userId,
+        await TestResult.findById(testResult.id)
+      );
+    });
   } catch (error) {
     console.error('Error executing test:', error);
     await testResult.markAsFailed(`Test execution error: ${error.message}`);
-    
+
     // Send real-time failure notification
-    webSocketService.sendTestFailed(userId, await TestResult.findById(testResult.id));
+    webSocketService.sendTestFailed(
+      userId,
+      await TestResult.findById(testResult.id)
+    );
   }
 };
 
@@ -274,13 +302,17 @@ const calculateScoreAndRecommendations = (testType, result) => {
         } else if (result.policy === 'quarantine') {
           score += 20;
         } else {
-          recommendations.push('Consider upgrading DMARC policy to "quarantine" or "reject"');
+          recommendations.push(
+            'Consider upgrading DMARC policy to "quarantine" or "reject"'
+          );
         }
-        
+
         if (result.percentage === 100) {
           score += 20;
         } else {
-          recommendations.push('Set DMARC percentage to 100% for full protection');
+          recommendations.push(
+            'Set DMARC percentage to 100% for full protection'
+          );
         }
       } else {
         recommendations.push('Implement DMARC record for email authentication');
@@ -294,12 +326,16 @@ const calculateScoreAndRecommendations = (testType, result) => {
           score += 40;
         } else if (result.includes_all && result.all_mechanism === '~all') {
           score += 20;
-          recommendations.push('Consider upgrading SPF record to use "-all" for stricter policy');
+          recommendations.push(
+            'Consider upgrading SPF record to use "-all" for stricter policy'
+          );
         } else {
           recommendations.push('Add "all" mechanism to SPF record');
         }
       } else {
-        recommendations.push('Implement SPF record to specify authorized mail servers');
+        recommendations.push(
+          'Implement SPF record to specify authorized mail servers'
+        );
       }
       break;
 

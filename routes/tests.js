@@ -7,7 +7,10 @@ const {
   retryTest,
 } = require('../controllers/testController');
 const { authenticateToken } = require('../middleware/auth');
-const { validateTestType, validatePagination } = require('../middleware/validation');
+const {
+  validateTestType,
+  validatePagination,
+} = require('../middleware/validation');
 const { testRateLimit } = require('../middleware/rateLimiter');
 
 const router = express.Router();

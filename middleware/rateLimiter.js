@@ -24,9 +24,11 @@ class RateLimiter {
     }
 
     const userRequests = this.requests.get(key);
-    
+
     // Remove old requests outside the window
-    const validRequests = userRequests.filter(timestamp => timestamp > windowStart);
+    const validRequests = userRequests.filter(
+      (timestamp) => timestamp > windowStart
+    );
     this.requests.set(key, validRequests);
 
     // Check if within limit
@@ -40,7 +42,7 @@ class RateLimiter {
 
     // Add current request
     validRequests.push(now);
-    
+
     return {
       allowed: true,
       remaining: maxRequests - validRequests.length,
@@ -57,8 +59,10 @@ class RateLimiter {
       const maxAge = 24 * 60 * 60 * 1000; // 24 hours
 
       for (const [key, timestamps] of this.requests.entries()) {
-        const validTimestamps = timestamps.filter(timestamp => now - timestamp < maxAge);
-        
+        const validTimestamps = timestamps.filter(
+          (timestamp) => now - timestamp < maxAge
+        );
+
         if (validTimestamps.length === 0) {
           this.requests.delete(key);
         } else {
@@ -87,7 +91,11 @@ const createRateLimit = (options = {}) => {
 
   return (req, res, next) => {
     const key = keyGenerator(req);
-    const { allowed, remaining, resetTime } = rateLimiter.isAllowed(key, windowMs, maxRequests);
+    const { allowed, remaining, resetTime } = rateLimiter.isAllowed(
+      key,
+      windowMs,
+      maxRequests
+    );
 
     // Set rate limit headers
     res.set({
@@ -107,17 +115,18 @@ const createRateLimit = (options = {}) => {
     // Handle response-based rate limiting
     if (!skipSuccessfulRequests || !skipFailedRequests) {
       const originalSend = res.send;
-      res.send = function(data) {
-        const shouldSkip = (skipSuccessfulRequests && res.statusCode < 400) ||
-                          (skipFailedRequests && res.statusCode >= 400);
-        
+      res.send = function (data) {
+        const shouldSkip =
+          (skipSuccessfulRequests && res.statusCode < 400) ||
+          (skipFailedRequests && res.statusCode >= 400);
+
         if (shouldSkip) {
           // Remove this request from count
           const userRequests = rateLimiter.requests.get(key) || [];
           userRequests.pop(); // Remove the last (current) request
           rateLimiter.requests.set(key, userRequests);
         }
-        
+
         return originalSend.call(this, data);
       };
     }

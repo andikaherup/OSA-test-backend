@@ -6,7 +6,8 @@ const options = {
     info: {
       title: 'Email Security Dashboard API',
       version: '1.0.0',
-      description: 'API for monitoring email security protocols (DMARC, SPF, DKIM, Mail Echo)',
+      description:
+        'API for monitoring email security protocols (DMARC, SPF, DKIM, Mail Echo)',
       contact: {
         name: 'API Support',
         email: 'support@example.com',
@@ -31,7 +32,11 @@ const options = {
           type: 'object',
           properties: {
             id: { type: 'integer', example: 1 },
-            email: { type: 'string', format: 'email', example: 'user@example.com' },
+            email: {
+              type: 'string',
+              format: 'email',
+              example: 'user@example.com',
+            },
             first_name: { type: 'string', example: 'John' },
             last_name: { type: 'string', example: 'Doe' },
             is_active: { type: 'boolean', example: true },
@@ -55,25 +60,25 @@ const options = {
           properties: {
             id: { type: 'integer', example: 1 },
             domain_id: { type: 'integer', example: 1 },
-            test_type: { 
-              type: 'string', 
+            test_type: {
+              type: 'string',
               enum: ['dmarc', 'spf', 'dkim', 'mail_echo'],
-              example: 'spf'
+              example: 'spf',
             },
-            status: { 
-              type: 'string', 
+            status: {
+              type: 'string',
               enum: ['pending', 'running', 'completed', 'failed'],
-              example: 'completed'
+              example: 'completed',
             },
-            result: { 
+            result: {
               type: 'object',
-              description: 'Test-specific result data'
+              description: 'Test-specific result data',
             },
             score: { type: 'integer', minimum: 0, maximum: 100, example: 85 },
-            recommendations: { 
-              type: 'array', 
+            recommendations: {
+              type: 'array',
               items: { type: 'string' },
-              example: ['Enable DMARC policy', 'Use stricter SPF record']
+              example: ['Enable DMARC policy', 'Use stricter SPF record'],
             },
             error_message: { type: 'string', nullable: true },
             executed_at: { type: 'string', format: 'date-time' },
@@ -96,10 +101,7 @@ const options = {
       },
     ],
   },
-  apis: [
-    './routes/*.js',
-    './controllers/*.js',
-  ],
+  apis: ['./routes/*.js', './controllers/*.js'],
 };
 
 const specs = swaggerJSDoc(options);

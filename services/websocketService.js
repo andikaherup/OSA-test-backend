@@ -24,7 +24,7 @@ class WebSocketService {
     this.io.use(async (socket, next) => {
       try {
         const token = socket.handshake.auth.token;
-        
+
         if (!token) {
           return next(new Error('Authentication token required'));
         }
@@ -56,10 +56,10 @@ class WebSocketService {
    */
   handleConnection(socket) {
     const userId = socket.userId;
-    
+
     // Store user socket mapping
     this.userSockets.set(userId, socket.id);
-    
+
     console.log(`User ${userId} connected via WebSocket`);
 
     // Join user to their personal room

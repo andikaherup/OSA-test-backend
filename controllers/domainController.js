@@ -7,7 +7,7 @@ const { APIError, asyncHandler } = require('../middleware/errorHandler');
  */
 const getDomains = asyncHandler(async (req, res) => {
   const domains = await Domain.findByUserId(req.user.id);
-  
+
   // Get latest test results for each domain
   const domainsWithTests = await Promise.all(
     domains.map(async (domain) => {
@@ -31,16 +31,16 @@ const getDomains = asyncHandler(async (req, res) => {
  */
 const getDomainById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  
+
   const domain = await Domain.findByIdAndUserId(id, req.user.id);
-  
+
   if (!domain) {
     throw new APIError('Domain not found', 404);
   }
 
   // Get domain with latest test results
   const domainWithTests = await domain.getWithLatestTests();
-  
+
   res.json({
     message: 'Domain retrieved successfully',
     domain: domainWithTests,
@@ -52,13 +52,13 @@ const getDomainById = asyncHandler(async (req, res) => {
  */
 const addDomain = asyncHandler(async (req, res) => {
   const { domain_name } = req.body;
-  
+
   // Check if domain already exists for this user
   const existingDomains = await Domain.findByUserId(req.user.id);
   const domainExists = existingDomains.some(
-    d => d.domain_name.toLowerCase() === domain_name.toLowerCase()
+    (d) => d.domain_name.toLowerCase() === domain_name.toLowerCase()
   );
-  
+
   if (domainExists) {
     throw new APIError('Domain already exists for this user', 409);
   }
@@ -80,9 +80,9 @@ const addDomain = asyncHandler(async (req, res) => {
 const updateDomain = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { domain_name } = req.body;
-  
+
   const domain = await Domain.findByIdAndUserId(id, req.user.id);
-  
+
   if (!domain) {
     throw new APIError('Domain not found', 404);
   }
@@ -91,9 +91,11 @@ const updateDomain = asyncHandler(async (req, res) => {
   if (domain_name && domain_name.toLowerCase() !== domain.domain_name) {
     const existingDomains = await Domain.findByUserId(req.user.id);
     const domainExists = existingDomains.some(
-      d => d.domain_name.toLowerCase() === domain_name.toLowerCase() && d.id !== domain.id
+      (d) =>
+        d.domain_name.toLowerCase() === domain_name.toLowerCase() &&
+        d.id !== domain.id
     );
-    
+
     if (domainExists) {
       throw new APIError('Domain name already exists for this user', 409);
     }
@@ -117,9 +119,9 @@ const updateDomain = asyncHandler(async (req, res) => {
  */
 const deleteDomain = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  
+
   const domain = await Domain.findByIdAndUserId(id, req.user.id);
-  
+
   if (!domain) {
     throw new APIError('Domain not found', 404);
   }
@@ -136,12 +138,12 @@ const deleteDomain = asyncHandler(async (req, res) => {
  */
 const getDomainStats = asyncHandler(async (req, res) => {
   const domains = await Domain.findByUserId(req.user.id);
-  
+
   let totalTests = 0;
   let passedTests = 0;
   let failedTests = 0;
   let pendingTests = 0;
-  
+
   const testsByType = {
     dmarc: { total: 0, passed: 0, failed: 0 },
     spf: { total: 0, passed: 0, failed: 0 },
@@ -151,10 +153,10 @@ const getDomainStats = asyncHandler(async (req, res) => {
 
   for (const domain of domains) {
     const tests = await TestResult.getLatestByDomain(domain.id);
-    
+
     for (const test of tests) {
       totalTests++;
-      
+
       if (test.status === 'completed') {
         if (test.score >= 70) {
           passedTests++;
@@ -169,7 +171,7 @@ const getDomainStats = asyncHandler(async (req, res) => {
         failedTests++;
         testsByType[test.test_type].failed++;
       }
-      
+
       testsByType[test.test_type].total++;
     }
   }
@@ -182,7 +184,8 @@ const getDomainStats = asyncHandler(async (req, res) => {
       passed_tests: passedTests,
       failed_tests: failedTests,
       pending_tests: pendingTests,
-      pass_rate: totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0,
+      pass_rate:
+        totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0,
       tests_by_type: testsByType,
     },
   });

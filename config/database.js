@@ -1,7 +1,6 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-
 const pool = new Pool({
   host: process.env.DB_HOST || 'postgres',
   port: process.env.DB_PORT || 5432,
@@ -11,7 +10,7 @@ const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
-  maxLifetimeSeconds: 60
+  maxLifetimeSeconds: 60,
 });
 
 // Test the connection
@@ -27,9 +26,9 @@ pool.on('error', (err) => {
 // Function to test database connection
 const testConnection = async () => {
   try {
-    const client = await pool.connect()
-    await client.query('SELECT NOW()')
-    client.release()
+    const client = await pool.connect();
+    await client.query('SELECT NOW()');
+    client.release();
     return true;
   } catch (err) {
     console.error('Database connection failed:', err.message);

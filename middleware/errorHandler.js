@@ -7,7 +7,7 @@ class APIError extends Error {
     this.statusCode = statusCode;
     this.isOperational = isOperational;
     this.name = 'APIError';
-    
+
     Error.captureStackTrace(this, this.constructor);
   }
 }
@@ -28,13 +28,16 @@ const globalErrorHandler = (error, req, res, next) => {
   let { statusCode = 500, message } = error;
 
   // Handle specific error types
-  if (error.code === '23505') { // Unique constraint violation
+  if (error.code === '23505') {
+    // Unique constraint violation
     statusCode = 409;
     message = 'Resource already exists';
-  } else if (error.code === '23503') { // Foreign key constraint violation
+  } else if (error.code === '23503') {
+    // Foreign key constraint violation
     statusCode = 400;
     message = 'Invalid reference to related resource';
-  } else if (error.code === '23502') { // Not null violation
+  } else if (error.code === '23502') {
+    // Not null violation
     statusCode = 400;
     message = 'Required field is missing';
   }
@@ -52,8 +55,12 @@ const globalErrorHandler = (error, req, res, next) => {
 
   res.status(statusCode).json({
     error: statusCode >= 500 ? 'Internal server error' : 'Request failed',
-    message: process.env.NODE_ENV === 'development' ? message : 
-             statusCode >= 500 ? 'Something went wrong' : message,
+    message:
+      process.env.NODE_ENV === 'development'
+        ? message
+        : statusCode >= 500
+          ? 'Something went wrong'
+          : message,
     ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
   });
 };
