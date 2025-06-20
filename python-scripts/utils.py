@@ -1,6 +1,7 @@
 import json
 import sys
 import dns.resolver
+import re
 
 def output_result(result):
     print(json.dumps(result))
@@ -13,6 +14,20 @@ def handle_error(error_message, domain=""):
     }
     output_result(error_result)
     sys.exit(1)
+
+def validate_domain(domain: str) -> bool:
+    """Validate domain name format"""
+    if not domain or len(domain) > 253:
+        return False
+    
+    # Basic domain regex
+    domain_pattern = re.compile(
+        r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?'
+        r'(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
+    )
+    
+    return bool(domain_pattern.match(domain))
+
 
 def dns_lookup(domain, record_type):
     try:
