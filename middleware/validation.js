@@ -1,100 +1,69 @@
+const { ValidationError } = require('./errorHandler');
+
 /**
  * Validate domain name format
- * @param {string} domain - Domain name to validate
- * @returns {boolean} True if domain is valid
  */
 const isValidDomain = (domain) => {
-  if (!domain || typeof domain !== 'string') {
-    return false;
-  }
-
-  // Basic domain regex pattern
-  const domainRegex =
-    /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-
-  return domainRegex.test(domain) && domain.length <= 253;
+  if (!domain || typeof domain !== 'string') return false;
+  
+  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  return domainRegex.test(domain) && domain.length <= 253 && domain.includes('.');
 };
 
 /**
  * Validate email format
- * @param {string} email - Email to validate
- * @returns {boolean} True if email is valid
  */
 const isValidEmail = (email) => {
-  if (!email || typeof email !== 'string') {
-    return false;
-  }
-
+  if (!email || typeof email !== 'string') return false;
+  
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  return emailRegex.test(email) && email.length <= 254;
 };
 
 /**
  * Sanitize string input
- * @param {string} input - Input to sanitize
- * @returns {string} Sanitized input
  */
 const sanitizeString = (input) => {
-  if (!input || typeof input !== 'string') {
-    return '';
-  }
-
+  if (!input || typeof input !== 'string') return '';
   return input.trim().replace(/[<>]/g, '');
 };
 
 /**
- * Middleware to validate domain input
+ * Domain validation middleware
  */
 const validateDomainInput = (req, res, next) => {
   const { domain_name } = req.body;
 
   if (!domain_name) {
-    return res.status(400).json({
-      error: 'Validation error',
-      message: 'Domain name is required',
-    });
+    throw new ValidationError('Domain name is required');
   }
 
-  const sanitizedDomain = sanitizeString(domain_name).toLowerCase();
+  const cleanDomain = sanitizeString(domain_name).toLowerCase();
 
-  if (!isValidDomain(sanitizedDomain)) {
-    return res.status(400).json({
-      error: 'Validation error',
-      message: 'Invalid domain name format',
-    });
+  if (!isValidDomain(cleanDomain)) {
+    throw new ValidationError('Invalid domain name format');
   }
 
-  // Add sanitized domain back to request
-  req.body.domain_name = sanitizedDomain;
+  req.body.domain_name = cleanDomain;
   next();
 };
 
 /**
- * Middleware to validate test type
+ * Test type validation middleware
  */
 const validateTestType = (req, res, next) => {
   const { test_type } = req.body;
-  const validTestTypes = ['dmarc', 'spf', 'dkim', 'mail_echo'];
+  const validTypes = ['dmarc', 'spf', 'dkim', 'mail_echo'];
 
-  if (!test_type) {
-    return res.status(400).json({
-      error: 'Validation error',
-      message: 'Test type is required',
-    });
-  }
-
-  if (!validTestTypes.includes(test_type)) {
-    return res.status(400).json({
-      error: 'Validation error',
-      message: `Invalid test type. Valid types: ${validTestTypes.join(', ')}`,
-    });
+  if (!test_type || !validTypes.includes(test_type)) {
+    throw new ValidationError(`Test type must be one of: ${validTypes.join(', ')}`);
   }
 
   next();
 };
 
 /**
- * Middleware to validate pagination parameters
+ * Pagination validation middleware
  */
 const validatePagination = (req, res, next) => {
   const { page = 1, limit = 20 } = req.query;
@@ -103,17 +72,11 @@ const validatePagination = (req, res, next) => {
   const limitNum = parseInt(limit, 10);
 
   if (isNaN(pageNum) || pageNum < 1) {
-    return res.status(400).json({
-      error: 'Validation error',
-      message: 'Page must be a positive integer',
-    });
+    throw new ValidationError('Page must be a positive integer');
   }
 
   if (isNaN(limitNum) || limitNum < 1 || limitNum > 100) {
-    return res.status(400).json({
-      error: 'Validation error',
-      message: 'Limit must be between 1 and 100',
-    });
+    throw new ValidationError('Limit must be between 1 and 100');
   }
 
   req.pagination = {
@@ -125,6 +88,68 @@ const validatePagination = (req, res, next) => {
   next();
 };
 
+/**
+ * Email validation middleware
+ */
+const validateEmail = (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ValidationError('Email is required');
+  }
+
+  const cleanEmail = sanitizeString(email).toLowerCase();
+
+  if (!isValidEmail(cleanEmail)) {
+    throw new ValidationError('Invalid email format');
+  }
+
+  req.body.email = cleanEmail;
+  next();
+};
+
+/**
+ * Password validation middleware
+ */
+const validatePasswordMiddleware = (req, res, next) => {
+  const { password } = req.body;
+
+  if (!password) {
+    throw new ValidationError('Password is required');
+  }
+
+  if (password.length < 8) {
+    throw new ValidationError('Password must be at least 8 characters long');
+  }
+
+  next();
+};
+
+/**
+ * Name validation middleware
+ */
+const validateNames = (req, res, next) => {
+  const { first_name, last_name } = req.body;
+
+  if (first_name !== undefined) {
+    const cleanName = sanitizeString(first_name);
+    if (cleanName.length < 1 || cleanName.length > 50) {
+      throw new ValidationError('First name must be between 1 and 50 characters');
+    }
+    req.body.first_name = cleanName;
+  }
+
+  if (last_name !== undefined) {
+    const cleanName = sanitizeString(last_name);
+    if (cleanName.length < 1 || cleanName.length > 50) {
+      throw new ValidationError('Last name must be between 1 and 50 characters');
+    }
+    req.body.last_name = cleanName;
+  }
+
+  next();
+};
+
 module.exports = {
   isValidDomain,
   isValidEmail,
@@ -132,4 +157,7 @@ module.exports = {
   validateDomainInput,
   validateTestType,
   validatePagination,
+  validateEmail,
+  validatePasswordMiddleware,
+  validateNames,
 };
