@@ -4,21 +4,20 @@ const { pool } = require('../../config/database');
  * Test database helper functions
  */
 class TestDatabase {
-  
   /**
    * Clean all test data from database
    */
   static async cleanup() {
     const client = await pool.connect();
-    
+
     try {
       await client.query('BEGIN');
-      
+
       // Delete in correct order to respect foreign key constraints
       await client.query('DELETE FROM test_results');
       await client.query('DELETE FROM domains');
       await client.query('DELETE FROM users WHERE email LIKE %test%');
-      
+
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
@@ -36,7 +35,7 @@ class TestDatabase {
       email: `test-${Date.now()}@example.com`,
       password_hash: '$2b$12$test.hash.for.testing.purposes.only',
       first_name: 'Test',
-      last_name: 'User'
+      last_name: 'User',
     };
 
     const user = { ...defaultUser, ...userData };
@@ -51,7 +50,7 @@ class TestDatabase {
       user.email,
       user.password_hash,
       user.first_name,
-      user.last_name
+      user.last_name,
     ]);
 
     return result.rows[0];
@@ -62,7 +61,7 @@ class TestDatabase {
    */
   static async createTestDomain(userId, domainData = {}) {
     const defaultDomain = {
-      domain_name: `test-${Date.now()}.example.com`
+      domain_name: `test-${Date.now()}.example.com`,
     };
 
     const domain = { ...defaultDomain, ...domainData };
@@ -85,7 +84,7 @@ class TestDatabase {
       test_type: 'spf',
       status: 'completed',
       result: { score: 85, record_found: true },
-      score: 85
+      score: 85,
     };
 
     const testResult = { ...defaultResult, ...resultData };
@@ -101,7 +100,7 @@ class TestDatabase {
       testResult.test_type,
       testResult.status,
       JSON.stringify(testResult.result),
-      testResult.score
+      testResult.score,
     ]);
 
     return result.rows[0];

@@ -33,7 +33,7 @@ describe('Authentication API', () => {
       email: 'test@example.com',
       password: 'TestPassword123!',
       first_name: 'John',
-      last_name: 'Doe'
+      last_name: 'Doe',
     };
 
     test('should register a new user successfully', async () => {
@@ -42,7 +42,10 @@ describe('Authentication API', () => {
         .send(validUserData)
         .expect(201);
 
-      expect(response.body).toHaveProperty('message', 'User registered successfully');
+      expect(response.body).toHaveProperty(
+        'message',
+        'User registered successfully'
+      );
       expect(response.body).toHaveProperty('user');
       expect(response.body).toHaveProperty('token');
       expect(response.body.user.email).toBe(validUserData.email);
@@ -52,7 +55,7 @@ describe('Authentication API', () => {
     test('should return error for missing required fields', async () => {
       const incompleteData = {
         email: 'test@example.com',
-        password: 'TestPassword123!'
+        password: 'TestPassword123!',
         // missing first_name and last_name
       };
 
@@ -68,7 +71,7 @@ describe('Authentication API', () => {
     test('should return error for invalid email format', async () => {
       const invalidEmailData = {
         ...validUserData,
-        email: 'invalid-email'
+        email: 'invalid-email',
       };
 
       const response = await request(app)
@@ -82,7 +85,7 @@ describe('Authentication API', () => {
     test('should return error for weak password', async () => {
       const weakPasswordData = {
         ...validUserData,
-        password: '123'
+        password: '123',
       };
 
       const response = await request(app)
@@ -115,20 +118,18 @@ describe('Authentication API', () => {
       email: 'test@example.com',
       password: 'TestPassword123!',
       first_name: 'John',
-      last_name: 'Doe'
+      last_name: 'Doe',
     };
 
     beforeEach(async () => {
       // Register a user for login tests
-      await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+      await request(app).post('/api/auth/register').send(userData);
     });
 
     test('should login with valid credentials', async () => {
       const loginData = {
         email: userData.email,
-        password: userData.password
+        password: userData.password,
       };
 
       const response = await request(app)
@@ -145,7 +146,7 @@ describe('Authentication API', () => {
     test('should return error for invalid email', async () => {
       const invalidLoginData = {
         email: 'nonexistent@example.com',
-        password: userData.password
+        password: userData.password,
       };
 
       const response = await request(app)
@@ -159,7 +160,7 @@ describe('Authentication API', () => {
     test('should return error for invalid password', async () => {
       const invalidLoginData = {
         email: userData.email,
-        password: 'WrongPassword123!'
+        password: 'WrongPassword123!',
       };
 
       const response = await request(app)
@@ -191,7 +192,7 @@ describe('Authentication API', () => {
           email: 'test@example.com',
           password: 'TestPassword123!',
           first_name: 'John',
-          last_name: 'Doe'
+          last_name: 'Doe',
         });
 
       authToken = registerResponse.body.token;
@@ -209,9 +210,7 @@ describe('Authentication API', () => {
     });
 
     test('should return error without token', async () => {
-      const response = await request(app)
-        .get('/api/auth/profile')
-        .expect(401);
+      const response = await request(app).get('/api/auth/profile').expect(401);
 
       expect(response.body).toHaveProperty('errorCode', 'AUTHENTICATION_ERROR');
     });
@@ -236,7 +235,7 @@ describe('Authentication API', () => {
           email: 'test@example.com',
           password: 'TestPassword123!',
           first_name: 'John',
-          last_name: 'Doe'
+          last_name: 'Doe',
         });
 
       authToken = registerResponse.body.token;
@@ -245,7 +244,7 @@ describe('Authentication API', () => {
     test('should update user profile', async () => {
       const updateData = {
         first_name: 'Jane',
-        last_name: 'Smith'
+        last_name: 'Smith',
       };
 
       const response = await request(app)
@@ -254,7 +253,10 @@ describe('Authentication API', () => {
         .send(updateData)
         .expect(200);
 
-      expect(response.body).toHaveProperty('message', 'Profile updated successfully');
+      expect(response.body).toHaveProperty(
+        'message',
+        'Profile updated successfully'
+      );
       expect(response.body.user.first_name).toBe('Jane');
       expect(response.body.user.last_name).toBe('Smith');
     });
@@ -262,7 +264,7 @@ describe('Authentication API', () => {
     test('should sanitize input data', async () => {
       const updateData = {
         first_name: '  Jane  <script>alert("xss")</script>  ',
-        last_name: 'Smith'
+        last_name: 'Smith',
       };
 
       const response = await request(app)
@@ -277,7 +279,7 @@ describe('Authentication API', () => {
     test('should return error for invalid name length', async () => {
       const updateData = {
         first_name: 'a'.repeat(51), // Too long
-        last_name: 'Smith'
+        last_name: 'Smith',
       };
 
       const response = await request(app)

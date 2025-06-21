@@ -25,4 +25,3 @@ jobs:
 
       - name: Check Prettier formatting in container
         run: docker compose exec -T app npx prettier --check .
-
