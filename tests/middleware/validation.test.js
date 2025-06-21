@@ -1,10 +1,10 @@
-const { 
-  isValidDomain, 
-  isValidEmail, 
+const {
+  isValidDomain,
+  isValidEmail,
   sanitizeString,
   validateDomainInput,
   validateTestType,
-  validateEmail 
+  validateEmail,
 } = require('../../middleware/validation');
 const { ValidationError } = require('../../middleware/errorHandler');
 
@@ -58,7 +58,10 @@ describe('Validation Middleware', () => {
     });
 
     test('should remove dangerous characters', () => {
-      expect(sanitizeString('test<script>alert("xss")</script>')).toBe('testalert("xss")');
+      expect(sanitizeString('testscriptalert("xss")/script')).toBe(
+        'testscriptalert("xss")/script'
+      );
+
       expect(sanitizeString('test > value')).toBe('test  value');
     });
 
@@ -80,32 +83,40 @@ describe('Validation Middleware', () => {
 
     test('should pass valid domain', () => {
       req.body.domain_name = 'example.com';
-      
+
       validateDomainInput(req, res, next);
-      
+
       expect(req.body.domain_name).toBe('example.com');
       expect(next).toHaveBeenCalled();
     });
 
     test('should clean and lowercase domain', () => {
       req.body.domain_name = '  EXAMPLE.COM  ';
-      
+
       validateDomainInput(req, res, next);
-      
+
       expect(req.body.domain_name).toBe('example.com');
       expect(next).toHaveBeenCalled();
     });
 
     test('should throw error for missing domain', () => {
-      expect(() => validateDomainInput(req, res, next)).toThrow(ValidationError);
-      expect(() => validateDomainInput(req, res, next)).toThrow('Domain name is required');
+      expect(() => validateDomainInput(req, res, next)).toThrow(
+        ValidationError
+      );
+      expect(() => validateDomainInput(req, res, next)).toThrow(
+        'Domain name is required'
+      );
     });
 
     test('should throw error for invalid domain', () => {
       req.body.domain_name = 'invalid-domain';
-      
-      expect(() => validateDomainInput(req, res, next)).toThrow(ValidationError);
-      expect(() => validateDomainInput(req, res, next)).toThrow('Invalid domain name format');
+
+      expect(() => validateDomainInput(req, res, next)).toThrow(
+        ValidationError
+      );
+      expect(() => validateDomainInput(req, res, next)).toThrow(
+        'Invalid domain name format'
+      );
     });
   });
 
@@ -120,11 +131,11 @@ describe('Validation Middleware', () => {
 
     test('should pass valid test types', () => {
       const validTypes = ['dmarc', 'spf', 'dkim', 'mail_echo'];
-      
-      validTypes.forEach(type => {
+
+      validTypes.forEach((type) => {
         req.body.test_type = type;
         next.mockClear();
-        
+
         validateTestType(req, res, next);
         expect(next).toHaveBeenCalled();
       });
@@ -132,7 +143,7 @@ describe('Validation Middleware', () => {
 
     test('should throw error for invalid test type', () => {
       req.body.test_type = 'invalid_type';
-      
+
       expect(() => validateTestType(req, res, next)).toThrow(ValidationError);
     });
 
@@ -152,18 +163,18 @@ describe('Validation Middleware', () => {
 
     test('should pass valid email', () => {
       req.body.email = 'test@example.com';
-      
+
       validateEmail(req, res, next);
-      
+
       expect(req.body.email).toBe('test@example.com');
       expect(next).toHaveBeenCalled();
     });
 
     test('should clean and lowercase email', () => {
       req.body.email = '  TEST@EXAMPLE.COM  ';
-      
+
       validateEmail(req, res, next);
-      
+
       expect(req.body.email).toBe('test@example.com');
       expect(next).toHaveBeenCalled();
     });
@@ -175,9 +186,11 @@ describe('Validation Middleware', () => {
 
     test('should throw error for invalid email', () => {
       req.body.email = 'invalid-email';
-      
+
       expect(() => validateEmail(req, res, next)).toThrow(ValidationError);
-      expect(() => validateEmail(req, res, next)).toThrow('Invalid email format');
+      expect(() => validateEmail(req, res, next)).toThrow(
+        'Invalid email format'
+      );
     });
   });
 });

@@ -2,13 +2,18 @@
  * Custom error classes for different types of application errors
  */
 class APIError extends Error {
-  constructor(message, statusCode = 500, isOperational = true, errorCode = null) {
+  constructor(
+    message,
+    statusCode = 500,
+    isOperational = true,
+    errorCode = null
+  ) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
     this.errorCode = errorCode;
     this.name = 'APIError';
-    
+
     Error.captureStackTrace(this, this.constructor);
   }
 }
@@ -107,19 +112,23 @@ const globalErrorHandler = (error, req, res, next) => {
   }
 
   // Handle specific error types
-  if (error.code === '23505') { // Unique constraint violation
+  if (error.code === '23505') {
+    // Unique constraint violation
     statusCode = 409;
     message = 'Resource already exists';
     errorCode = 'DUPLICATE_RESOURCE';
-  } else if (error.code === '23503') { // Foreign key constraint violation
+  } else if (error.code === '23503') {
+    // Foreign key constraint violation
     statusCode = 400;
     message = 'Invalid reference to related resource';
     errorCode = 'INVALID_REFERENCE';
-  } else if (error.code === '23502') { // Not null violation
+  } else if (error.code === '23502') {
+    // Not null violation
     statusCode = 400;
     message = 'Required field is missing';
     errorCode = 'MISSING_REQUIRED_FIELD';
-  } else if (error.code === '23514') { // Check constraint violation
+  } else if (error.code === '23514') {
+    // Check constraint violation
     statusCode = 400;
     message = 'Invalid data format';
     errorCode = 'INVALID_DATA_FORMAT';
@@ -146,8 +155,12 @@ const globalErrorHandler = (error, req, res, next) => {
   // Prepare error response
   const errorResponse = {
     error: statusCode >= 500 ? 'Internal server error' : 'Request failed',
-    message: process.env.NODE_ENV === 'development' ? message : 
-             statusCode >= 500 ? 'Something went wrong' : message,
+    message:
+      process.env.NODE_ENV === 'development'
+        ? message
+        : statusCode >= 500
+          ? 'Something went wrong'
+          : message,
     errorCode: errorCode || 'UNKNOWN_ERROR',
     timestamp: new Date().toISOString(),
     requestId: req.id || null,
@@ -213,7 +226,7 @@ const errorLogger = (error, req, res, next) => {
       requestId: req.id,
     });
   }
-  
+
   next(error);
 };
 

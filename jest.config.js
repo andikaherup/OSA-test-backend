@@ -6,7 +6,7 @@ module.exports = {
   testMatch: [
     '**/tests/**/*.test.js',
     '**/tests/**/*.spec.js',
-    '**/__tests__/**/*.js'
+    '**/__tests__/**/*.js',
   ],
 
   // Setup files
@@ -21,7 +21,7 @@ module.exports = {
     'services/**/*.js',
     '!**/node_modules/**',
     '!**/tests/**',
-    '!**/coverage/**'
+    '!**/coverage/**',
   ],
 
   // Coverage thresholds
@@ -30,8 +30,8 @@ module.exports = {
       branches: 70,
       functions: 80,
       lines: 80,
-      statements: 80
-    }
+      statements: 80,
+    },
   },
 
   // Coverage reporters
@@ -50,5 +50,5 @@ module.exports = {
   forceExit: true,
 
   // Detect open handles
-  detectOpenHandles: true
+  detectOpenHandles: true,
 };

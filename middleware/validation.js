@@ -5,9 +5,12 @@ const { ValidationError } = require('./errorHandler');
  */
 const isValidDomain = (domain) => {
   if (!domain || typeof domain !== 'string') return false;
-  
-  const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-  return domainRegex.test(domain) && domain.length <= 253 && domain.includes('.');
+
+  const domainRegex =
+    /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  return (
+    domainRegex.test(domain) && domain.length <= 253 && domain.includes('.')
+  );
 };
 
 /**
@@ -15,7 +18,7 @@ const isValidDomain = (domain) => {
  */
 const isValidEmail = (email) => {
   if (!email || typeof email !== 'string') return false;
-  
+
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email) && email.length <= 254;
 };
@@ -56,7 +59,9 @@ const validateTestType = (req, res, next) => {
   const validTypes = ['dmarc', 'spf', 'dkim', 'mail_echo'];
 
   if (!test_type || !validTypes.includes(test_type)) {
-    throw new ValidationError(`Test type must be one of: ${validTypes.join(', ')}`);
+    throw new ValidationError(
+      `Test type must be one of: ${validTypes.join(', ')}`
+    );
   }
 
   next();
@@ -134,7 +139,9 @@ const validateNames = (req, res, next) => {
   if (first_name !== undefined) {
     const cleanName = sanitizeString(first_name);
     if (cleanName.length < 1 || cleanName.length > 50) {
-      throw new ValidationError('First name must be between 1 and 50 characters');
+      throw new ValidationError(
+        'First name must be between 1 and 50 characters'
+      );
     }
     req.body.first_name = cleanName;
   }
@@ -142,7 +149,9 @@ const validateNames = (req, res, next) => {
   if (last_name !== undefined) {
     const cleanName = sanitizeString(last_name);
     if (cleanName.length < 1 || cleanName.length > 50) {
-      throw new ValidationError('Last name must be between 1 and 50 characters');
+      throw new ValidationError(
+        'Last name must be between 1 and 50 characters'
+      );
     }
     req.body.last_name = cleanName;
   }

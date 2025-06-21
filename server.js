@@ -8,11 +8,11 @@ const { execSync } = require('child_process');
 const webSocketService = require('./services/websocketService');
 
 // Import middleware
-const { 
-  globalErrorHandler, 
-  notFoundHandler, 
-  requestIdMiddleware, 
-  errorLogger 
+const {
+  globalErrorHandler,
+  notFoundHandler,
+  requestIdMiddleware,
+  errorLogger,
 } = require('./middleware/errorHandler');
 const { apiRateLimit } = require('./middleware/rateLimiter');
 
@@ -26,10 +26,12 @@ const server = createServer(app);
 const PORT = process.env.PORT || 3000;
 
 // Security and parsing middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -40,10 +42,14 @@ app.use(requestIdMiddleware);
 app.use('/api', apiRateLimit);
 
 // API Documentation
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Email Security Dashboard API',
-}));
+app.use(
+  '/api/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpecs, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Email Security Dashboard API',
+  })
+);
 
 // API routes
 app.use('/api/auth', authRoutes);
@@ -52,8 +58,8 @@ app.use('/api/tests', testRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     version: process.env.npm_package_version || '1.0.0',
@@ -65,7 +71,8 @@ app.get('/api', (req, res) => {
   res.json({
     name: 'Email Security Dashboard API',
     version: '1.0.0',
-    description: 'API for monitoring email security (DMARC, SPF, DKIM, Mail Echo)',
+    description:
+      'API for monitoring email security (DMARC, SPF, DKIM, Mail Echo)',
     endpoints: {
       auth: '/api/auth',
       domains: '/api/domains',
@@ -105,12 +112,15 @@ const testConnectionWithRetry = async (maxRetries = 5) => {
         return true;
       }
     } catch (error) {
-      console.log(`Database connection attempt ${i + 1}/${maxRetries} failed:`, error.message);
+      console.log(
+        `Database connection attempt ${i + 1}/${maxRetries} failed:`,
+        error.message
+      );
     }
-    
+
     if (i < maxRetries - 1) {
       console.log(`Retrying in 2 seconds...`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
   return false;
@@ -119,8 +129,6 @@ const testConnectionWithRetry = async (maxRetries = 5) => {
 // Start server
 const startServer = async () => {
   try {
-
-  
     // Test database connection with retries
     const dbConnected = await testConnectionWithRetry();
     if (!dbConnected) {

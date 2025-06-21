@@ -1,12 +1,16 @@
 const User = require('../models/User');
-const { hashPassword, comparePassword, validatePassword } = require('../utils/password');
+const {
+  hashPassword,
+  comparePassword,
+  validatePassword,
+} = require('../utils/password');
 const { generateToken } = require('../utils/jwt');
-const { 
-  ValidationError, 
-  ConflictError, 
+const {
+  ValidationError,
+  ConflictError,
   AuthenticationError,
   DatabaseError,
-  asyncHandler 
+  asyncHandler,
 } = require('../middleware/errorHandler');
 
 /**
@@ -25,17 +29,16 @@ const register = asyncHandler(async (req, res) => {
   if (missingFields.length > 0) {
     throw new ValidationError(
       'Missing required fields',
-      missingFields.map(field => ({ field, message: `${field} is required` }))
+      missingFields.map((field) => ({ field, message: `${field} is required` }))
     );
   }
 
   // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    throw new ValidationError(
-      'Invalid email format',
-      [{ field: 'email', message: 'Please provide a valid email address' }]
-    );
+    throw new ValidationError('Invalid email format', [
+      { field: 'email', message: 'Please provide a valid email address' },
+    ]);
   }
 
   // Validate password strength
@@ -43,23 +46,30 @@ const register = asyncHandler(async (req, res) => {
   if (!passwordValidation.isValid) {
     throw new ValidationError(
       'Password does not meet requirements',
-      passwordValidation.errors.map(error => ({ field: 'password', message: error }))
+      passwordValidation.errors.map((error) => ({
+        field: 'password',
+        message: error,
+      }))
     );
   }
 
   // Validate name fields
   if (first_name.trim().length < 1 || first_name.trim().length > 50) {
-    throw new ValidationError(
-      'Invalid first name',
-      [{ field: 'first_name', message: 'First name must be between 1 and 50 characters' }]
-    );
+    throw new ValidationError('Invalid first name', [
+      {
+        field: 'first_name',
+        message: 'First name must be between 1 and 50 characters',
+      },
+    ]);
   }
 
   if (last_name.trim().length < 1 || last_name.trim().length > 50) {
-    throw new ValidationError(
-      'Invalid last name',
-      [{ field: 'last_name', message: 'Last name must be between 1 and 50 characters' }]
-    );
+    throw new ValidationError('Invalid last name', [
+      {
+        field: 'last_name',
+        message: 'Last name must be between 1 and 50 characters',
+      },
+    ]);
   }
 
   try {
@@ -111,10 +121,11 @@ const login = asyncHandler(async (req, res) => {
       'Missing required fields',
       [
         { field: 'email', message: 'Email is required' },
-        { field: 'password', message: 'Password is required' }
-      ].filter(item => 
-        (item.field === 'email' && !email) || 
-        (item.field === 'password' && !password)
+        { field: 'password', message: 'Password is required' },
+      ].filter(
+        (item) =>
+          (item.field === 'email' && !email) ||
+          (item.field === 'password' && !password)
       )
     );
   }
