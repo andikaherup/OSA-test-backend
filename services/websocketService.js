@@ -95,7 +95,6 @@ class WebSocketService {
    */
   sendTestUpdate(userId, testResult) {
     if (!this.io) return;
-
     this.io.to(`user:${userId}`).emit('test:update', {
       type: 'test_update',
       data: testResult,

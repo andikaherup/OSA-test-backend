@@ -83,7 +83,7 @@ const rateLimiter = new RateLimiter();
 const createRateLimit = (options = {}) => {
   const {
     windowMs = 15 * 60 * 1000, // 15 minutes
-    maxRequests = 100,
+    maxRequests = 1000,
     keyGenerator = (req) => req.ip,
     skipSuccessfulRequests = false,
     skipFailedRequests = false,
@@ -138,7 +138,7 @@ const createRateLimit = (options = {}) => {
 // Predefined rate limiters
 const authRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 5, // 5 auth attempts per 15 minutes
+  maxRequests: 30, // 5 auth attempts per 15 minutes
   keyGenerator: (req) => `auth:${req.ip}`,
 });
 
