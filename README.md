@@ -17,12 +17,12 @@ This backend powers the Email Security Dashboard, providing RESTful APIs and rea
 email-security-dashboard-backend/
 ├── package.json
 ├── .gitignore
-├── server.js 
-├── routes/ 
-├── models/ 
-├── controllers/ 
-├── middleware/ 
-├── config/ 
+├── server.js
+├── routes/
+├── models/
+├── controllers/
+├── middleware/
+├── config/
 └── python-scripts/
 ```
 
@@ -44,5 +44,3 @@ The `python-scripts/` directory contains Python scripts for tasks like email ana
 
 - Environment variables are managed in the `config/` directory.
 - WebSocket and API ports can be configured via `.env` files.
-
-
