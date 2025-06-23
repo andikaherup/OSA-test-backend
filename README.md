@@ -32,6 +32,10 @@ email-security-dashboard-backend/
 2. Start development server: `npm run dev` (to be configured)
 3. Start everything using Docker: `npm run docker:up`
 
+**Note:**  
+This project uses `docker compose` (with a space) in the npm scripts.  
+f your system uses `docker-compose` (with a dash), please update the related scripts in `package.json` to use `docker-compose` instead.
+
 ## WebSocket Integration
 
 This backend uses WebSocket (via the `ws` or `socket.io` library) to push real-time updates to connected clients. The WebSocket server is initialized in `server.js`. Clients can subscribe to events such as new email alerts or security status changes.
